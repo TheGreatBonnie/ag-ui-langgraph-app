@@ -3,10 +3,10 @@
 import { useCoAgent, useCoAgentStateRender } from "@copilotkit/react-core";
 import { CopilotSidebar } from "@copilotkit/react-ui";
 import { ResearchAgentState } from "@/lib/research-agent-types";
-import { Check as CheckIcon, LoaderCircle } from "lucide-react";
+import { Progress } from "@/components/Progress";
 import { ReportCanvas } from "@/components/ReportCanvas";
 import { useRef } from "react";
-import { cn } from "@/lib/utils";
+// import { cn } from "@/lib/utils";
 
 export default function CopilotKitPage() {
   // Reference to track if research is in progress
@@ -93,127 +93,53 @@ export default function CopilotKitPage() {
         }, 1000);
       }
     },
-    render: ({ status }) => {
-      if (status === "inProgress" || status === "complete") {
-        isResearchInProgress.current = true;
+    render: ({ state }) => {
+      // if (status === "inProgress" || status === "complete") {
+      isResearchInProgress.current = true;
 
-        // Get steps from state phases
-        const getStepsFromState = () => {
-          const currentPhase = state?.status?.phase || "idle";
-          const currentStage = state?.research?.stage || "not_started";
+      // Get steps from state phases
+      const getStepsFromState = () => {
+        const currentPhase = state?.status?.phase || "idle";
+        const currentStage = state?.research?.stage || "not_started";
 
-          const allPhases = [
-            "initialized",
-            "gathering_information",
-            "analyzing_information",
-            "generating_report",
-            "completed",
-          ];
+        const allPhases = [
+          "initialized",
+          "gathering_information",
+          "analyzing_information",
+          "generating_report",
+          "completed",
+        ];
 
-          return allPhases.map((phase) => ({
-            id: phase,
-            label: phase
-              .split("_")
-              .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-              .join(" "),
-            description: getStepDetails(phase, currentStage),
-            completed:
-              allPhases.indexOf(currentPhase) > allPhases.indexOf(phase),
-            current: currentPhase === phase,
-          }));
-        };
-
-        const steps = getStepsFromState();
-        const currentStepIndex = steps.findIndex((step) => step.current);
-
-        // Helper function to truncate URLs
-        const truncateUrl = (url: string) => {
-          if (url.length <= 50) return url;
-          return url.substring(0, 47) + "...";
-        };
-
-        // Create logs array from state-derived steps
-        const logs = steps.map((step, index) => ({
-          done: step.completed || index < currentStepIndex,
-          message: `${step.label}: ${step.description}`,
+        return allPhases.map((phase) => ({
+          id: phase,
+          label: phase
+            .split("_")
+            .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(" "),
+          description: getStepDetails(phase, currentStage),
+          completed: allPhases.indexOf(currentPhase) > allPhases.indexOf(phase),
+          current: currentPhase === phase,
         }));
+      };
 
-        return (
-          <div className="research-in-progress bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-            {/* Progress Steps */}
-            <div data-test-id="progress-steps">
-              <div className="border border-slate-200 bg-slate-100/30 shadow-md rounded-lg overflow-hidden text-sm py-2">
-                {logs.map((log, index) => (
-                  <div
-                    key={index}
-                    data-test-id="progress-step-item"
-                    className={`flex ${
-                      log.done || index === logs.findIndex((log) => !log.done)
-                        ? ""
-                        : "opacity-50"
-                    }`}>
-                    <div className="w-8">
-                      <div
-                        className="w-4 h-4 bg-slate-700 flex items-center justify-center rounded-full mt-[10px] ml-[12px]"
-                        data-test-id={
-                          log.done
-                            ? "progress-step-item_done"
-                            : "progress-step-item_loading"
-                        }>
-                        {log.done ? (
-                          <CheckIcon className="w-3 h-3 text-white" />
-                        ) : (
-                          <LoaderCircle className="w-3 h-3 text-white animate-spin" />
-                        )}
-                      </div>
-                      {index < logs.length - 1 && (
-                        <div
-                          className={cn(
-                            "h-full w-[1px] bg-slate-200 ml-[20px]"
-                          )}></div>
-                      )}
-                    </div>
-                    <div className="flex-1 flex justify-center py-2 pl-2 pr-4">
-                      <div className="flex-1 flex items-center text-xs text-gray-700">
-                        {log.message.replace(
-                          /https?:\/\/[^\s]+/g, // Regex to match URLs
-                          (url) => truncateUrl(url) // Replace with truncated URL
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+      const steps = getStepsFromState();
+      const currentStepIndex = steps.findIndex((step) => step.current);
 
-            {state?.research?.sources_found > 0 && (
-              <div className="text-xs text-gray-500 flex items-center gap-1.5">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="12"
-                  height="12"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round">
-                  <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M13 12H3"></path>
-                </svg>
-                Found {state.research.sources_found} source
-                {state.research.sources_found !== 1 ? "s" : ""}
-              </div>
-            )}
-          </div>
-        );
-      }
+      // Create logs array from state-derived steps
+      const logs = steps.map((step, index) => ({
+        done: step.completed || index < currentStepIndex,
+        message: `${step.label}: ${step.description}`,
+      }));
 
-      if (status === "complete") {
-        isResearchInProgress.current = false;
-        return null;
-      }
+      return <Progress logs={logs || []} state={state} />;
+      // }
 
-      return null;
+      // if (status === "complete") {
+      //   isResearchInProgress.current = false;
+      //   return null;
+      // }
+
+      // return null;
     },
   });
 
